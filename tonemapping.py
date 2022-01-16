@@ -10,11 +10,7 @@ def ToneMapping(image):
     normal_image_L = np_img_L / 255
     height, width = normal_image.shape[:-1]
     n = height * width
-    print(n,np.exp(np.sum(np.log(delta + normal_image_L))/n))
     Lwaver = np.exp(np.sum(np.log(delta + normal_image_L)/n))
-    # normal_image_t = alpha / Lwaver * normal_image
-    # normal_image_t[np.where(normal_image_t>1)] = 1 - normal_image_t[np.where(normal_image_t>1)]/np.max(normal_image_t)
-    # normal_image = np.clip(normal_image_t, 0,1)
     lg = np.log(np_img_L / Lwaver + 1) / np.log(np.max(np_img_L) / Lwaver + 1)
     lg_min, lg_max = np.min(lg), np.max(lg)
     lg = lg - lg_min / (lg_max - lg_min)
