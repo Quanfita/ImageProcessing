@@ -36,7 +36,7 @@ def NewToneMapping(image):
     lg_min, lg_max = np.min(lg), np.max(lg)
     lg = lg - lg_min / (lg_max - lg_min)
     Lbias = np.sum(lg) / n
-    alpha = .48
+    alpha = .72
     lg = lg.reshape([height,width,1]) * normal_image**((Lbias - Lwaver)*alpha)
     lg = 1 - (1 - lg) * (1 - normal_image)
     lg_min, lg_max = np.min(lg), np.max(lg)
@@ -87,25 +87,27 @@ def gamma(image,g):
 if __name__ == '__main__':
     import os
     base_dir = os.path.dirname(__file__)
+    def saveImg(name,image):
+        cv2.imwrite(os.path.join(base_dir,name),image)
 
-    image = cv2.imread(os.path.join(base_dir,'test14.jpg'))
+    image = cv2.imread(os.path.join(base_dir,'test11.png'))
 
     lg = NewToneMapping(image)
     img = (lg*255).astype(np.uint8)
-    cv2.imwrite('res1.png', img)
+    saveImg('res1.png', img)
 
     lg = ToneMapping(image)
     img = (lg*255).astype(np.uint8)
-    cv2.imwrite('res2.png', img)
+    saveImg('res2.png', img)
 
     img = ReinhardToneMapping(np.array(image),0.1)
-    cv2.imwrite('res3.png', img)
+    saveImg('res3.png', img)
 
     img = ACESToneMapping(np.array(image))
-    cv2.imwrite('res4.png', img)
+    saveImg('res4.png', img)
 
     img = gamma(np.array(image),.3)
-    cv2.imwrite('res5.png', img)
+    saveImg('res5.png', img)
 
     img = bloom(np.array(image))
-    cv2.imwrite('res6.png', img)
+    saveImg('res6.png', img)
