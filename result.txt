@@ -1,0 +1,6 @@
+Ours: 78ms
+Tone Mapping: 41ms
+Reinhard: 19ms
+ACES: 53ms
+ACES+Bloom: 110ms
+Gamma: 93ms
