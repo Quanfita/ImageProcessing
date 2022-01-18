@@ -31,18 +31,18 @@ def NewToneMapping(image):
     height, width = normal_image.shape[:-1]
     n = height * width
     Lwaver = np.exp(np.sum(np.log(delta + normal_image_L)/n))
-    # print(Lwaver)
     lg = np.log(np_img_L / Lwaver + 1) / np.log(np.max(np_img_L) / Lwaver + 1)
     lg_min, lg_max = np.min(lg), np.max(lg)
     lg = lg - lg_min / (lg_max - lg_min)
-    Lbias = np.sum(lg) / n
-    alpha = .72
+    # Lbias = np.sum(lg) / n
+    Lbias = np.exp(np.sum(np.log(delta + lg)/n))
+    alpha = .64
     lg = lg.reshape([height,width,1]) * normal_image**((Lbias - Lwaver)*alpha)
-    lg = 1 - (1 - lg) * (1 - normal_image)
+    # lg = 1 - (1 - lg) * (1 - normal_image)
     lg_min, lg_max = np.min(lg), np.max(lg)
     lg = lg - lg_min / (lg_max - lg_min)
     t = lg[:,:,0] * .299 + lg[:,:,1] * .587 + lg[:,:,2] * .114
-    # print(np.exp(np.sum(np.log(delta + t)/n)))
+    print(np.exp(np.sum(np.log(delta + t)/n)))
     return lg
 
 def ACESToneMapping(image):
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     def saveImg(name,image):
         cv2.imwrite(os.path.join(base_dir,name),image)
 
-    image = cv2.imread(os.path.join(base_dir,'test11.png'))
+    image = cv2.imread(os.path.join(base_dir,'test1.png'))
 
     lg = NewToneMapping(image)
     img = (lg*255).astype(np.uint8)

@@ -1,4 +1,5 @@
 import os
+from sys import path
 from turtle import width
 import cv2
 import glob
@@ -35,5 +36,23 @@ def mergeOriginImage(x=0,y=0,w=base_width,h=base_height):
         cv2.putText(image, name_dict.get(name_list[i]), (i*base_width+(base_width - len(name_dict.get(name_list[i]))*24)//2, base_height+30), cv2.FONT_HERSHEY_COMPLEX, 1.2, (0, 0, 0), 2)
     cv2.imwrite('compare.png',image)
 
+def drawHist():
+    path_dir = os.path.join(base_dir,'exposure','result','sample4')
+    res = cv2.imread(os.path.join(path_dir,'res1.png'),0)
+    ori = cv2.imread(os.path.join(path_dir,'test4.png'),0)
+    ori_hist = cv2.calcHist([ori],[0],None,[256],[0,256])
+    res_hist = cv2.calcHist([res],[0],None,[256],[0,256])
+    canvas1 = np.ones([200,256,3],dtype=np.uint8) * 255
+    canvas2 = np.ones([200,256,3],dtype=np.uint8) * 255
+    h_bar_1 = (ori_hist / np.max(ori_hist) * 199).astype(np.uint8).ravel()
+    h_bar_2 = (res_hist / np.max(res_hist) * 199).astype(np.uint8).ravel()
+    print(h_bar_1)
+    for l in range(canvas1.shape[1]):
+        canvas1[199-h_bar_1[l]:,l] = [255,0,0]
+        canvas2[199-h_bar_2[l]:,l] = [255,0,0]
+    cv2.imwrite('hist1.png',canvas1)
+    cv2.imwrite('hist2.png',canvas2)
+
+
 if __name__ == '__main__':
-    mergeOriginImage()
+    drawHist()
