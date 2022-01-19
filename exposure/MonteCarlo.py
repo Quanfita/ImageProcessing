@@ -1,44 +1,38 @@
 from cmath import sqrt
 from email.mime import image
+from turtle import distance
 import numpy as np
 import cv2
 import random
 
-def sample(r, num):
-    kernel = np.zeros([2*r+1,2*r+1],dtype=np.float32)
-    x = random.sample(range(2*r+1), num)
-    y = random.sample(range(2*r+1), num)
-    for item in zip(x,y):
-        kernel[item[0],item[1]] = abs(r - item[0]) + abs(r - item[1])
-    kernel *= 1 / np.sum(kernel)
-    return kernel
-
-def distance(a,b):
-    d = (a - b)**2
-    return np.sum(d)**.5
+def sample(area,point,num):
+    rand = np.random.uniform(low=0.0, high=1.0, size=area.shape[:-1])
+    distance = np.sum((area - point) ** 2)**.5
+    rand[np.where(rand>=.5)] = 1
+    rand[np.where(rand<.5)] = 0
+    rand[np.where(distance<=20)] = 1
+    rand[np.where(distance>20)] = 0
+    s = np.sum(rand)
+    point = np.sum(area * rand.reshape([*area.shape[:-1],1])) / s
+    return point
 
 def monte_carlo(image):
     alpha = .5
     r = 50
     num = 10
-    kernel = sample(r, num)
     h,w = image.shape[:-1]
-    test_map = np.zeros([h,w],dtype=np.uint8)
-    tmp = cv2.filter2D(image, -1, kernel)
+    # test_map = np.zeros([h,w],dtype=np.uint8)
+    sample_map = np.zeros([h,w,3],dtype=np.uint8)
     Lm = 20
     Lmm = 100
     for i in range(h):
         for j in range(w):
-            if distance(image[i,j],tmp[i,j]) > Lm:
-                image[i,j] = (1 - alpha)*image[i,j] + alpha*tmp[i,j]
-                test_map[i,j] = 255
-    test_map = cv2.blur(test_map,(15,15))
-    test_map[np.where(test_map>=64)] = 255
-    test_map[np.where(test_map<64)] = 0
-    cv2.imwrite('tmp.png',tmp)
-    cv2.imwrite('diff.png',np.sum(np.abs(image-tmp),axis=-1)/3)
+            b_h,b_w = max(0,i-r),max(0,j-r)
+            e_h,e_w = min(h,b_h+r),min(w,b_w+r)
+            sample_map[i,j] = sample(image[b_h:e_h,b_w:e_w],image[i,j],num)
+            image[i,j] = image[i,j] * (1 - alpha) + sample_map[i,j] * alpha
     cv2.imwrite('res.png',image)
-    cv2.imwrite('test_map.png',test_map)
+    cv2.imwrite('test_map.png',sample_map)
 
 if __name__ == '__main__':
     import os
