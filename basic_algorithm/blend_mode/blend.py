@@ -32,9 +32,9 @@ def Overlay(img1,img2):#叠加
     
     for row in range(height):            #遍历高
         for col in range(weight):         #遍历宽
-            for c in range(channels):     #便利通道
+            for c in range(channels):     #遍历通道
                 if img2[row, col, c] <0.5:
-                    res[row, col, c] = 2*img1[row, col, c]*img2[row, col, c];
+                    res[row, col, c] = 2*img1[row, col, c]*img2[row, col, c]
                 else:
                     res[row, col, c] = 1 - 2 * (1 - img1[row, col, c]) * (1 - img2[row, col, c])
     res = (255*res).astype(np.uint8)
@@ -50,7 +50,7 @@ def SoftLight(img1,img2):#柔光
     
     for row in range(height):            #遍历高
         for col in range(weight):         #遍历宽
-            for c in range(channels):     #便利通道
+            for c in range(channels):     #遍历通道
                 if img1[row, col, c] <0.5:
                     res[row, col, c] = (2 * img1[row, col, c] - 1)*(img2[row, col, c] - img2[row, col, c]**2) + img2[row, col, c]
                 else:
@@ -68,7 +68,7 @@ def HardLight(img1,img2):#强光
     
     for row in range(height):            #遍历高
         for col in range(weight):         #遍历宽
-            for c in range(channels):     #便利通道
+            for c in range(channels):     #遍历通道
                 if img1[row, col, c] <0.5:
                     res[row, col, c] = 2*img1[row, col, c]*img2[row, col, c];
                 else:
