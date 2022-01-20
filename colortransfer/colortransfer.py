@@ -12,7 +12,7 @@ def color_transfer(sc, dc):
 	s_mean, s_std = get_mean_and_std(sc)
 	dc = cv2.cvtColor(dc, cv2.COLOR_BGR2LAB)
 	t_mean, t_std = get_mean_and_std(dc)
-	st = (s_mean / t_mean) ** 1.2
+	st = (s_mean / t_mean) ** 1.5
 	img_n = ((sc-s_mean)*(t_std/s_std))+t_mean
 	np.putmask(img_n, img_n > 255, 255)
 	np.putmask(img_n, img_n < 0, 0)
@@ -135,6 +135,8 @@ dst = color_transfer_max(sc, dc)
 cv2.imwrite('r_max.png',dst)
 dst = color_transfer_nonlinear(sc, dc)
 cv2.imwrite('r_n.png',dst)
+dst = color_transfer_maxmin(sc, dc)
+cv2.imwrite('r_m.png',dst)
 # dst = dst / 255
 # m = np.mean(dst)
 # dst = (dst - m) * st + m
