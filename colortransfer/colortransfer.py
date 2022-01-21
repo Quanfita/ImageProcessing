@@ -1,5 +1,7 @@
+from statistics import mean
 import cv2
 import numpy as np
+import scipy.linalg
 
 def get_mean_and_std(img):
 	x_mean, x_std = cv2.meanStdDev(img)
@@ -120,6 +122,32 @@ def color_transfer_maxmin(sc,dc):
 	dst = cv2.cvtColor(cv2.convertScaleAbs(img_n), cv2.COLOR_LAB2BGR)
 	return dst
 
+def color_transfer_svd(sc, dc):
+	h,w,_ = sc.shape
+	sc = (sc.copy() / 255).reshape([-1,3]).T
+	dc = (dc.copy() / 255).reshape([-1,3]).T
+	mean_s = np.mean(sc, 1)
+	mean_t = np.mean(dc, 1)
+	cov_s = np.cov(sc)
+	cov_t = np.cov(dc)
+	U_s, A_s, _ = np.linalg.svd(cov_s)
+	U_t, A_t, _ = np.linalg.svd(cov_t)
+	rgbh_s = np.concatenate([sc,np.ones(shape=(1,sc.shape[-1]))])
+	T_t = np.eye(4)
+	T_t[0:3,3] = mean_t
+	T_s = np.eye(4)
+	T_s[0:3,3] = -mean_s
+	R_t = scipy.linalg.block_diag(U_t,1)
+	R_s = scipy.linalg.block_diag(np.linalg.inv(U_s),1)
+	S_t = scipy.linalg.block_diag(np.diag(A_t)**.5,1)
+	S_s = scipy.linalg.block_diag(np.diag(A_s)**(-.5),1)
+	S_s[np.isinf(S_s)] = 0
+	S_t[np.isinf(S_t)] = 0
+	rgbh_e = T_t @ R_t @ S_t @ S_s @ R_s @ T_s @ rgbh_s
+	rgb_e = rgbh_e[0:3,:].T
+	rgb_e = np.clip(rgb_e,0,1)
+	return (rgb_e.reshape([h,w,3])*255).astype(np.uint8)
+
 sc = cv2.imread("A.jpg", 1)
 dc = cv2.imread("B.jpg", 1)
 dst,st = color_transfer(sc, dc)
@@ -137,6 +165,8 @@ dst = color_transfer_nonlinear(sc, dc)
 cv2.imwrite('r_n.png',dst)
 dst = color_transfer_maxmin(sc, dc)
 cv2.imwrite('r_m.png',dst)
+dst = color_transfer_svd(sc, dc)
+cv2.imwrite('r_svd.png',dst)
 # dst = dst / 255
 # m = np.mean(dst)
 # dst = (dst - m) * st + m
