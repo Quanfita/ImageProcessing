@@ -59,32 +59,73 @@ def cramer(array,constant) -> list:
 	return [np.linalg.det(Ai)/A for Ai in Ais]
 
 def color_transfer_nonlinear(sc,dc):
-	sc = cv2.cvtColor(sc, cv2.COLOR_BGR2RGB)
-	dc = cv2.cvtColor(dc, cv2.COLOR_BGR2RGB)
+	# sc = sc / 255
+	# dc = dc / 255
+	# sc = sc.astype(np.uint64)
+	# dc = dc.astype(np.uint64)
+	sc = cv2.cvtColor(sc, cv2.COLOR_BGR2LAB).astype(np.uint64)
+	dc = cv2.cvtColor(dc, cv2.COLOR_BGR2LAB).astype(np.uint64)
 	s_min,s_max = np.array([np.min(sc[:,:,0]),np.min(sc[:,:,1]),np.min(sc[:,:,2])]), np.array([np.max(sc[:,:,0]),np.max(sc[:,:,1]),np.max(sc[:,:,2])])
 	t_min,t_max = np.array([np.min(dc[:,:,0]),np.min(dc[:,:,1]),np.min(dc[:,:,2])]), np.array([np.max(dc[:,:,0]),np.max(dc[:,:,1]),np.max(dc[:,:,2])])
-	s_mean, s_std = get_mean_and_std(sc)
-	t_mean, t_std = get_mean_and_std(dc)
+	s_mean, _ = get_mean_and_std(sc)
+	t_mean, _ = get_mean_and_std(dc)
+	s_mean = s_mean.astype(np.uint8)
+	t_mean = t_mean.astype(np.uint8)
+	# s_mean = np.array([np.median(sc[:,:,i]) for i in range(3)])
+	# s_mean_max = np.array([np.median(sc[:,:,i][np.where(sc[:,:,i]>=s_mean[i])]) for i in range(3)])
+	# s_mean_min = np.array([np.median(sc[:,:,i][np.where(sc[:,:,i]<s_mean[i])]) for i in range(3)])
+	# t_mean = np.array([np.median(dc[:,:,i]) for i in range(3)])
+	# t_mean_max = np.array([np.median(dc[:,:,i][np.where(dc[:,:,i]>=t_mean[i])]) for i in range(3)])
+	# t_mean_min = np.array([np.median(dc[:,:,i][np.where(dc[:,:,i]<t_mean[i])]) for i in range(3)])
 	t = [len(sc[:,:,0][np.where(sc[:,:,0]>=s_mean[0])]),len(sc[:,:,1][np.where(sc[:,:,1]>=s_mean[1])]),len(sc[:,:,2][np.where(sc[:,:,2]>=s_mean[2])])]
-	s_mean_min = np.array([np.sum(sc[:,:,0][np.where(sc[:,:,0]>=s_mean[0])])/t[0], np.sum(sc[:,:,1][np.where(sc[:,:,1]>=s_mean[1])])/t[1],np.sum(sc[:,:,1][np.where(sc[:,:,1]>=s_mean[1])])/t[2]])
-	t = len(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])
-	s_mean_max = np.array([np.sum(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])/t, np.sum(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])/t, np.sum(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])/t])
-	print(s_mean,s_mean_min,s_mean_max)
-	a = np.array([[s_min[0]**2,s_min[0],1],
+	s_mean_max = np.array([np.sum(sc[:,:,0][np.where(sc[:,:,0]>=s_mean[0])])/t[0], np.sum(sc[:,:,1][np.where(sc[:,:,1]>=s_mean[1])])/t[1],np.sum(sc[:,:,1][np.where(sc[:,:,1]>=s_mean[1])])/t[2]],dtype=np.uint8)
+	t = [len(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])]),len(sc[:,:,1][np.where(sc[:,:,1]<s_mean[1])]),len(sc[:,:,2][np.where(sc[:,:,2]<s_mean[2])])]
+	s_mean_min = np.array([np.sum(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])/t[0], np.sum(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])/t[1], np.sum(sc[:,:,0][np.where(sc[:,:,0]<s_mean[0])])/t[2]],dtype=np.uint8)
+	print(s_min,s_mean_min,s_mean,s_mean_max,s_max)
+	t = [len(dc[:,:,0][np.where(dc[:,:,0]>=t_mean[0])]),len(dc[:,:,1][np.where(dc[:,:,1]>=t_mean[1])]),len(dc[:,:,2][np.where(dc[:,:,2]>=t_mean[2])])]
+	t_mean_max = np.array([np.sum(dc[:,:,0][np.where(dc[:,:,0]>=t_mean[0])])/t[0], np.sum(dc[:,:,1][np.where(dc[:,:,1]>=t_mean[1])])/t[1],np.sum(dc[:,:,1][np.where(dc[:,:,1]>=t_mean[1])])/t[2]],dtype=np.uint8)
+	t = [len(dc[:,:,0][np.where(dc[:,:,0]<t_mean[0])]),len(dc[:,:,1][np.where(dc[:,:,1]<t_mean[1])]),len(dc[:,:,2][np.where(dc[:,:,2]<t_mean[2])])]
+	t_mean_min = np.array([np.sum(dc[:,:,0][np.where(dc[:,:,0]<t_mean[0])])/t[0], np.sum(dc[:,:,0][np.where(dc[:,:,0]<t_mean[0])])/t[1], np.sum(dc[:,:,0][np.where(dc[:,:,0]<t_mean[0])])/t[2]],dtype=np.uint8)
+	print(t_min,t_mean_min,t_mean,t_mean_max,t_max)
+	# a = np.array([[s_min[0]**4,s_min[0]**3,s_min[0]**2,s_min[0],1],
+	# 			  [s_mean_min[0]**4,s_mean_min[0]**3,s_mean_min[0]**2,s_mean_min[0],1],
+	# 			  [s_mean[0]**4,s_mean[0]**3,s_mean[0]**2,s_mean[0],1],
+	# 			  [s_mean_max[0]**4,s_mean_max[0]**3,s_mean_max[0]**2,s_mean_max[0],1],
+	# 			  [s_max[0]**4,s_max[0]**3,s_max[0]**2,s_max[0],1]])
+	# b = np.array([t_min[0],t_mean_min[0],t_mean[0],t_mean_max[0],t_max[0]])
+	# aL,bL,cL,dL,eL = cramer(a,b)
+	# print(aL,bL,cL,dL,eL)
+	# a = np.array([[s_min[1]**4,s_min[1]**3,s_min[1]**2,s_min[1],1],
+	# 			  [s_mean_min[1]**4,s_mean_min[1]**3,s_mean_min[1]**2,s_mean_min[1],1],
+	# 			  [s_mean[1]**4,s_mean[1]**3,s_mean[1]**2,s_mean[1],1],
+	# 			  [s_mean_max[1]**4,s_mean_max[1]**3,s_mean_max[1]**2,s_mean_max[1],1],
+	# 			  [s_max[1]**4,s_max[1]**3,s_max[1]**2,s_max[1],1]])
+	# b = np.array([t_min[1],t_mean_min[1],t_mean[1],t_mean_max[1],t_max[1]])
+	# aA,bA,cA,dA,eA = cramer(a,b)
+	# a = np.array([[s_min[2]**4,s_min[2]**3,s_min[2]**2,s_min[2],1],
+	# 			  [s_mean_min[2]**4,s_mean_min[2]**3,s_mean_min[2]**2,s_mean_min[2],1],
+	# 			  [s_mean[2]**4,s_mean[2]**3,s_mean[2]**2,s_mean[2],1],
+	# 			  [s_mean_max[2]**4,s_mean_max[2]**3,s_mean_max[2]**2,s_mean_max[2],1],
+	# 			  [s_max[2]**4,s_max[2]**3,s_max[2]**2,s_max[2],1]])
+	# b = np.array([t_min[2],t_mean_min[2],t_mean[2],t_mean_max[2],t_max[2]])
+	# aB,bB,cB,dB,eB = cramer(a,b)
+
+	a = np.array([[s_mean_min[0]**2,s_mean_min[0],1],
 				  [s_mean[0]**2,s_mean[0],1],
-				  [s_max[0]**2,s_max[0],1]])
-	b = np.array([t_min[0],t_mean[0],t_max[0]])
+				  [s_mean_max[0]**2,s_mean_max[0],1]])
+	b = np.array([t_mean_min[0],t_mean[0],t_mean_max[0]])
 	aL,bL,cL = cramer(a,b)
-	a = np.array([[s_min[1]**2,s_min[1],1],
+	a = np.array([[s_mean_min[1]**2,s_mean_min[1],1],
 				  [s_mean[1]**2,s_mean[1],1],
-				  [s_max[1]**2,s_max[1],1]])
-	b = np.array([t_min[1],t_mean[1],t_max[1]])
+				  [s_mean_max[1]**2,s_mean_max[1],1]])
+	b = np.array([t_mean_min[1],t_mean[1],t_mean_max[1]])
 	aA,bA,cA = cramer(a,b)
-	a = np.array([[s_min[2]**2,s_min[2],1],
+	a = np.array([[s_mean_min[2]**2,s_mean_min[2],1],
 				  [s_mean[2]**2,s_mean[2],1],
-				  [s_max[2]**2,s_max[2],1]])
-	b = np.array([t_min[2],t_mean[2],t_max[2]])
+				  [s_mean_max[2]**2,s_mean_max[2],1]])
+	b = np.array([t_mean_min[2],t_mean[2],t_mean_max[2]])
 	aB,bB,cB = cramer(a,b)
+
 	# lg = np.mat([[s_min[0]**2,s_min[0],1],
 	# 			  [s_max[0]**2,s_max[0],1],
 	# 			  [s_mean[0]**2,s_mean[0],1]])
@@ -133,10 +174,19 @@ def color_transfer_nonlinear(sc,dc):
 	a = np.array([aL,aA,aB])
 	b = np.array([bL,bA,bB])
 	c = np.array([cL,cA,cB])
+	# d = np.array([dL,dA,dB])
+	# e = np.array([eL,eA,eB])
+	# img_n = a*sc**4 + b*sc**3 + c*sc**2 + d*sc + e
 	img_n = a*sc**2 + b*sc + c
-	np.putmask(img_n, img_n > 255, 255)
-	np.putmask(img_n, img_n < 0, 0)
-	dst = cv2.cvtColor(cv2.convertScaleAbs(img_n), cv2.COLOR_RGB2BGR)
+	print(a,b,c)
+	print(np.max(img_n),np.min(img_n))
+	img_n = np.clip(img_n,0,255).astype(np.uint8)
+	# mi,ma = np.min(img_n),np.max(img_n)
+	# img_n = (img_n - mi) / (ma - mi) * 255
+	dst = cv2.cvtColor(cv2.convertScaleAbs(img_n), cv2.COLOR_LAB2BGR)
+	# dst = cv2.cvtColor(cv2.convertScaleAbs(img_n), cv2.COLOR_LAB2RGB)
+	# dst = cv2.cvtColor(cv2.convertScaleAbs(img_n), cv2.COLOR_HSV2RGB)
+	# dst = cv2.convertScaleAbs(img_n)
 	return dst
 	
 
