@@ -1,13 +1,18 @@
 import cv2
 import numpy as np
 
-def exposure(image,value):
+def luminance(image,value):
     if value > 0:
         image = image.copy() * (1 / (1 - value))
         image = np.clip(image,0,255)
     else:
         image = image.copy() * (1 + value)
     return image.astype(np.uint8)
+
+def exposure(image,value):
+    image = image * 2 ** (1 + value)
+    image = np.clip(image,0,255)
+    return image
 
 def contrast(image,value):
     image = image / 255
@@ -41,26 +46,42 @@ def saturation(image, value):
         image = L + (image - L) * (1 + alpha)
     return image*255
 
-def shapen(image,value):
-    image_blur = cv2.blur(image,(5,5))
-    cv2.imwrite('tmp.png',image_blur)
-    bias = image - image_blur
-    cv2.imwrite('tmp.png',bias*.5)
-    image = image + bias * (1/(1 - value))*0.1
-    image = np.clip(image,0,255)
-    return image
+def sharpen(image,value):
+    img = image.copy() * 1.0
+    gauss_out = cv2.GaussianBlur(img, (5,5),10)
+    
+    # alpha 0 - 5
+    alpha = value
+    img_out = (img - gauss_out) * alpha + img
+    
+    img_out = img_out/255.0
+    
+    # 饱和处理
+    mask_1 = img_out  < 0 
+    mask_2 = img_out  > 1
+    
+    img_out = img_out * (1-mask_1)
+    img_out = img_out * (1-mask_2) + mask_2
+    return (img_out*255).astype(np.uint8)
 
 def tonemapping(image,value):
-    image_blur = cv2.blur(image,(5,5))
+    image = image.copy() * 1.0
+    image_blur = cv2.GaussianBlur(image,(5,5),10)
     bias = image - image_blur
-    print(np.max(bias),np.min(bias))
-    image = np.clip(image_blur*(1 + value),0,225) + bias
-    image = np.clip(image,0,255)
-    return image
+    image = image_blur*(1 + value) + bias
+    image = image / 255 
+    mask_1 = image  < 0 
+    mask_2 = image  > 1
+    
+    img_out = image * (1-mask_1)
+    img_out = img_out * (1-mask_2) + mask_2
+    return (img_out*255).astype(np.uint8)
 
 if __name__ == '__main__':
     image = cv2.imread('lena.jpg')
+    cv2.imwrite('luminance.png',luminance(image,.5))
     cv2.imwrite('exposure.png',exposure(image,.5))
     cv2.imwrite('contrast.png',contrast(image,.5))
     cv2.imwrite('saturation.png',saturation(image,.5))
-    cv2.imwrite('shapen.png',shapen(image,.5))
+    cv2.imwrite('sharpen.png',sharpen(image,.5))
+    cv2.imwrite('tonemapping.png',tonemapping(image,.5))
