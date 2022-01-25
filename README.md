@@ -12,6 +12,7 @@ This repository will not include Machine Learning and Deep Learning!
     - **Blend Mode**: Blend-mode algorithms commonly used in PhotoShop.
 - **Color Transfer**: Transfer the color distribution of one image to another image.
 - **Unexposure Enhance**: The underexposed image is processed to ensure that the processed image can have a normal illumination distribution.
+- **Style Transfer**: Implementation of various stylization algorithms.
 
 ## Misc
 
