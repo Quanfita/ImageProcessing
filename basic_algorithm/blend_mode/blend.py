@@ -40,18 +40,10 @@ def Multiply(img1,img2):#正片叠底
 def Overlay(img1,img2):#叠加
     img1 = img1 / 255.0
     img2 = img2 / 255.0
-    height = img1.shape[0]
-    weight = img1.shape[1]
-    channels = img1.shape[2]
-    res = np.zeros([height,weight,channels],dtype=np.float32)
-    
-    for row in range(height):            #遍历高
-        for col in range(weight):         #遍历宽
-            for c in range(channels):     #遍历通道
-                if img2[row, col, c] <0.5:
-                    res[row, col, c] = 2*img1[row, col, c]*img2[row, col, c]
-                else:
-                    res[row, col, c] = 1 - 2 * (1 - img1[row, col, c]) * (1 - img2[row, col, c])
+    res = np.zeros_like(img1,dtype=np.float32)
+    flags = np.zeros_like(img1)
+    flags[np.where(img2<.5)] = 1
+    res = flags * 2 * img1 * img2 + (1 - flags) * (1 - 2 * (1 - img1) * (1 - img2))
     res = (255*res).astype(np.uint8)
     return res
 
@@ -59,14 +51,6 @@ def SoftLight(img1,img2):#柔光
     img1 = img1 / 255.0
     img2 = img2 / 255.0
     res = np.zeros_like(img1,dtype=np.float32)
-    
-    # for row in range(height):            #遍历高
-    #     for col in range(weight):         #遍历宽
-    #         for c in range(channels):     #遍历通道
-    #             if img1[row, col, c] <0.5:
-    #                 res[row, col, c] = (2 * img1[row, col, c] - 1)*(img2[row, col, c] - img2[row, col, c]**2) + img2[row, col, c]
-    #             else:
-    #                 res[row, col, c] = (2 * img1[row, col, c] - 1)*(np.sqrt(img2[row, col, c]) - img2[row, col, c]) + img2[row, col, c]
     flags = np.zeros_like(img1)
     flags[np.where(img1<.5)] = 1
     res = flags * ((2 * img1 - 1) * (img2 - img2**2) + img2) + (1 - flags) * ((2 * img1 - 1) * (img2**.5 - img2) + img2)
@@ -77,14 +61,6 @@ def HardLight(img1,img2):#强光
     img1 = img1 / 255.0
     img2 = img2 / 255.0
     res = np.zeros_like(img1,dtype=np.float32)
-    
-    # for row in range(height):            #遍历高
-    #     for col in range(weight):         #遍历宽
-    #         for c in range(channels):     #遍历通道
-    #             if img1[row, col, c] <0.5:
-    #                 res[row, col, c] = 2*img1[row, col, c]*img2[row, col, c]
-    #             else:
-    #                 res[row, col, c] = 1 - 2 * (1 - img1[row, col, c])*(1 - img2[row, col, c])
     flags = np.zeros_like(img1)
     flags[np.where(img1<.5)] = 1
     res = flags * 2 * img1 * img2 + (1 - flags) * (1 - 2 * (1 - img1)*(1 - img2))
@@ -192,20 +168,15 @@ def LinearLight(img1,img2):#线性光
 def PinLight(img2,img1):#点光
     img1 = img1 / 255.0
     img2 = img2 / 255.0
-    height = img1.shape[0]
-    weight = img1.shape[1]
-    channels = img1.shape[2]
-    res = np.zeros([height,weight,channels],dtype=np.float32)
-    
-    for i in range(height):            #遍历高
-        for j in range(weight):         #遍历宽
-            for c in range(channels):
-                if img1[i,j,c] <= 2 * img2[i,j,c] - 1.0:
-                    res[i,j,c] = 2 * img2[i,j,c] - 1.0
-                elif 2 * img2[i,j,c] - 1.0 < img1[i,j,c] < 2 * img2[i,j,c]:
-                    res[i,j,c] = img1[i,j,c]
-                else:
-                    res[i,j,c] = 2 * img2[i,j,c]
+    res = np.zeros_like(img1,np.float32)
+    flags1 = np.zeros_like(img1)
+    flags1[np.where(img1<=2*img2-1)] = 1
+    res = flags1 * (2 * img2 - 1.0)
+    flags2 = np.zeros_like(img1)
+    flags2[np.where(img1>=2*img2)] = 1
+    res += flags2 * 2 * img2
+    flags3 = 1 - np.logical_or(flags1,flags2).astype(np.uint8)
+    res += flags3 * img1
     res = (255*res).astype(np.uint8)
     return res
 
