@@ -11,7 +11,7 @@ from matplotlib.pyplot import flag
 import numpy as np
 
 def Normal(img1,img2,alpha=.5):
-    res = alpha * img1 + (1 - alpha) * img2
+    res = alpha * img2 + (1 - alpha) * img1
     return res.astype(np.uint8)
 
 def Dissolve(img1,img2,alpha=.5):
@@ -224,6 +224,35 @@ def Divide(img1,img2):#划分
     res = (res*255).astype(np.uint8)
     return res
 
+def Hue(img1, img2):#色相
+    img1 = cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
+    img2 = cv2.cvtColor(img2,cv2.COLOR_BGR2HSV)
+    img2[:,:,0] = img1[:,:,0]
+    res = cv2.cvtColor(img2,cv2.COLOR_HSV2BGR)
+    return res
+
+def Saturation(img1,img2):#饱和度
+    img1 = cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
+    img2 = cv2.cvtColor(img2,cv2.COLOR_BGR2HSV)
+    img2[:,:,1] = img1[:,:,1]
+    res = cv2.cvtColor(img2,cv2.COLOR_HSV2BGR)
+    return res
+
+def Color(img1,img2):#颜色
+    img1 = cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
+    img2 = cv2.cvtColor(img2,cv2.COLOR_BGR2HSV)
+    img2[:,:,0] = img1[:,:,0]
+    img2[:,:,1] = img1[:,:,1]
+    res = cv2.cvtColor(img2,cv2.COLOR_HSV2BGR)
+    return res
+
+def Lightness(img1,img2):#明度
+    img1 = cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
+    img2 = cv2.cvtColor(img2,cv2.COLOR_BGR2HSV)
+    img2[:,:,2] = img1[:,:,2]
+    res = cv2.cvtColor(img2,cv2.COLOR_HSV2BGR)
+    return res
+
 if __name__ == '__main__':
     img1 = cv2.imread('./sample/lena.jpg')
     img2 = cv2.imread('./sample/background.jpg')
@@ -251,6 +280,10 @@ if __name__ == '__main__':
     exclusion = Exclusion(img1,img2)
     subtract = Subtract(img1,img2)
     divide = Divide(img1,img2)
+    hue = Hue(img1,img2)
+    saturation = Saturation(img1,img2)
+    color = Color(img1,img2)
+    lightness = Lightness(img1,img2)
     cv2.imwrite('./result/normal.jpg',normal)
     cv2.imwrite('./result/dissolve.jpg',dissolve)
     cv2.imwrite('./result/screen.jpg',screen)
@@ -274,3 +307,7 @@ if __name__ == '__main__':
     cv2.imwrite('./result/exclusion.jpg',exclusion)
     cv2.imwrite('./result/subtract.jpg',subtract)
     cv2.imwrite('./result/divide.jpg',divide)
+    cv2.imwrite('./result/hue.jpg',hue)
+    cv2.imwrite('./result/saturation.jpg',saturation)
+    cv2.imwrite('./result/color.jpg',color)
+    cv2.imwrite('./result/lightness.jpg',lightness)
