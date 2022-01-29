@@ -95,8 +95,8 @@ def edge_demo(image):
     kernel = np.ones((3, 3), np.uint8)
     img_dilate = cv2.dilate(egde_output, kernel)
     cv2.imwrite('canny_edge_dilate.jpg',255-img_dilate)
-    # img_erode = Xihua(255-img_dilate,array)
-    # cv2.imwrite('canny_edge_erode.jpg',img_erode)
+    img_erode = Xihua(255-img_dilate,array)
+    cv2.imwrite('canny_edge_erode.jpg',img_erode)
 
 if __name__ == '__main__':
     img = cv2.imread('sample.jpg')
