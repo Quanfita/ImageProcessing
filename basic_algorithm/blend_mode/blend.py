@@ -246,7 +246,7 @@ def Color(img1,img2):#颜色
     res = cv2.cvtColor(img2,cv2.COLOR_HSV2BGR)
     return res
 
-def Lightness(img1,img2):#明度
+def Luminosity(img1,img2):#明度
     img1 = cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
     img2 = cv2.cvtColor(img2,cv2.COLOR_BGR2HSV)
     img2[:,:,2] = img1[:,:,2]
@@ -283,7 +283,7 @@ if __name__ == '__main__':
     hue = Hue(img1,img2)
     saturation = Saturation(img1,img2)
     color = Color(img1,img2)
-    lightness = Lightness(img1,img2)
+    luminosity = Luminosity(img1,img2)
     cv2.imwrite('./result/normal.jpg',normal)
     cv2.imwrite('./result/dissolve.jpg',dissolve)
     cv2.imwrite('./result/screen.jpg',screen)
@@ -310,4 +310,4 @@ if __name__ == '__main__':
     cv2.imwrite('./result/hue.jpg',hue)
     cv2.imwrite('./result/saturation.jpg',saturation)
     cv2.imwrite('./result/color.jpg',color)
-    cv2.imwrite('./result/lightness.jpg',lightness)
+    cv2.imwrite('./result/luminosity.jpg',luminosity)
