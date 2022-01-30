@@ -98,6 +98,50 @@ def edge_demo(image):
     img_erode = Xihua(255-img_dilate,array)
     cv2.imwrite('canny_edge_erode.jpg',img_erode)
 
+def edge_filter(image):
+    kernel1 = np.array([[-3,-1,0,1,3],
+                        [-1,0,0,0,1],
+                        [0,0,0,0,0],
+                        [-1,0,0,0,1],
+                        [-3,-1,0,1,3]])
+    kernel2 = np.array([[-1,0,1],
+                        [-2,0,2],
+                        [-1,0,1]])
+    kernel3 = np.array([[-1,-2,-1],
+                        [0,0,0],
+                        [-1,-2,-1]])
+    # s1 = np.sum(kernel1)
+    res1 = cv2.filter2D(image,-1,kernel2)
+    res2 = cv2.filter2D(image,-1,kernel3)
+    res = np.clip(res1+res2,0,255)
+    res[np.where(res>20)] = 255
+    cv2.imwrite('res1.png',255-res)
+    res = cv2.filter2D(image,-1,kernel1)
+    # res[np.where(res<=100)] = 0
+    cv2.imwrite('res2.png',255-res)
+
+def edge(image):
+    h,w = image.shape
+    image = cv2.resize(image,(w,h))
+    sigma = 3
+    kernel_size = (0,0)
+    L = cv2.GaussianBlur(image, kernel_size, sigma)
+    H = (255 - cv2.subtract(image, L)) / 255
+    H = H ** 5
+    # contours, _ = cv2.findContours((H*255).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # n = len(contours)  # 轮廓的个数
+    # cv_contours = []
+    # for contour in contours:
+    #     area = cv2.contourArea(contour)
+    #     if area >= 32:
+    #         cv_contours.append(contour)
+    H = cv2.resize(H,(w,h))
+    # cv2.fillPoly(H, cv_contours, (255, 255, 255))
+    cv2.imwrite('res.png',H*255)
+
 if __name__ == '__main__':
-    img = cv2.imread('sample.jpg')
-    edge_demo(img)
+    img = cv2.imread('sample.jpg',0)
+    image = cv2.imread('sample.jpg')
+    edge(img)
+    edge_filter(img)
+    # edge_demo(image)
