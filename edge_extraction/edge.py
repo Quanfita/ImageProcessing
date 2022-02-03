@@ -99,45 +99,55 @@ def edge_demo(image):
     cv2.imwrite('canny_edge_erode.jpg',img_erode)
 
 def edge_filter(image):
-    kernel1 = np.array([[-3,-1,0,1,3],
-                        [-1,0,0,0,1],
-                        [0,0,0,0,0],
-                        [-1,0,0,0,1],
-                        [-3,-1,0,1,3]])
+    kernel1 = np.array([[1,0],
+                        [0,-1]])
     kernel2 = np.array([[-1,0,1],
                         [-2,0,2],
                         [-1,0,1]])
-    kernel3 = np.array([[-1,-2,-1],
-                        [0,0,0],
-                        [-1,-2,-1]])
-    # s1 = np.sum(kernel1)
+    kernel3 = np.array([[-1,0,1],
+                        [-1,0,1],
+                        [-1,0,1]])
+    threshold = 50
+    l = []
     res1 = cv2.filter2D(image,-1,kernel2)
-    res2 = cv2.filter2D(image,-1,kernel3)
+    res2 = cv2.filter2D(image,-1,kernel2.T)
     res = np.clip(res1+res2,0,255)
-    res[np.where(res>20)] = 255
-    cv2.imwrite('res1.png',255-res)
-    res = cv2.filter2D(image,-1,kernel1)
-    # res[np.where(res<=100)] = 0
-    cv2.imwrite('res2.png',255-res)
+    res[np.where(res>=threshold)] = 255
+    l.append(255-res)
+    cv2.imwrite('Sobel.png',255-res)
+    res1 = cv2.filter2D(image,-1,kernel1)
+    res2 = cv2.filter2D(image,-1,kernel1.T)
+    res = np.clip(res1+res2,0,255)
+    res[np.where(res>=threshold)] = 255
+    l.append(255-res)
+    cv2.imwrite('Roberts.png',255-res)
+    res1 = cv2.filter2D(image,-1,kernel3)
+    res2 = cv2.filter2D(image,-1,kernel3.T)
+    res = np.clip(res1+res2,0,255)
+    res[np.where(res>=threshold)] = 255
+    l.append(255-res)
+    cv2.imwrite('Prewitt.png',255-res)
+    length = len(l)
+    l1 = l.pop(0).astype(np.float32)
+    res1 = l1.copy()
+    res2 = l1.copy()
+    for img in l:
+        res1 = res1 * img
+        res2 = res2 + img
+    res1 = (res1/255/255).astype(np.uint8)
+    res1[np.where(res1>=threshold)] = 255
+    cv2.imwrite('SRP_M.png',res1)
+    res2 = (res2 / length).astype(np.uint8)
+    res2[np.where(res2>=threshold*3)] = 255
+    cv2.imwrite('SRP_A.png',res2)
 
 def edge(image):
-    h,w = image.shape
-    image = cv2.resize(image,(w,h))
     sigma = 3
     kernel_size = (0,0)
     L = cv2.GaussianBlur(image, kernel_size, sigma)
-    H = (255 - cv2.subtract(image, L)) / 255
-    H = H ** 5
-    # contours, _ = cv2.findContours((H*255).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # n = len(contours)  # 轮廓的个数
-    # cv_contours = []
-    # for contour in contours:
-    #     area = cv2.contourArea(contour)
-    #     if area >= 32:
-    #         cv_contours.append(contour)
-    H = cv2.resize(H,(w,h))
-    # cv2.fillPoly(H, cv_contours, (255, 255, 255))
-    cv2.imwrite('res.png',H*255)
+    H = (255 - cv2.subtract(image, L))
+    H[H<=250] = 0
+    cv2.imwrite('DoG.png',H)
 
 if __name__ == '__main__':
     img = cv2.imread('sample.jpg',0)

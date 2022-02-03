@@ -86,8 +86,8 @@ def pencil_stroke(img):
     S = get_stroke(img, 3, 8)
     S = S ** 10
     S = (cv2.resize(S,(w,h))*255).astype(np.uint8)
-    # S[np.where(S>.7*255)] = 255
-    # S[np.where(S<.35*255)] = 0
+    S[np.where(S>.5*255)] = 255
+    S[np.where(S<.5*255)] = 0
     # c_min, c_max = np.min(S[np.where((S>.3*255)&(S<.7*255))]),np.max(S[np.where((S>.3*255)&(S<.7*255))])
     # S[np.where((S>.3*255)&(S<.7*255))] = ((S[np.where((S>.3*255)&(S<.7*255))] - c_min) / (c_max - c_min) * 255).astype(np.uint8)
     return S
