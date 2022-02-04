@@ -26,21 +26,17 @@ def saturation(image, value):
         image = L + (image - L) * (1 + alpha)
     return image*255
 
+def contrast(image,value):
+    image = image / 255
+    mean = np.mean(image)
+    # mean = np.mean(image,axis=2).reshape([*image.shape[:-1],1])
+    image = ((image - mean) * (1 + value) + mean)*255
+    image = np.clip(image,0,255)
+    return image.astype(np.uint8)
+
 def zmMinFilterGray(src, r=7):
     '''''最小值滤波，r是滤波器半径'''
     return cv2.erode(src,np.ones((2*r-1,2*r-1)))
-# =============================================================================
-#     if r <= 0:
-#         return src
-#     h, w = src.shape[:2]
-#     I = src
-#     res = np.minimum(I  , I[[0]+range(h-1)  , :])
-#     res = np.minimum(res, I[range(1,h)+[h-1], :])
-#     I = res
-#     res = np.minimum(I  , I[:, [0]+range(w-1)])
-#     res = np.minimum(res, I[:, range(1,w)+[w-1]])
-# =============================================================================
- #   return zmMinFilterGray(res, r-1)
 
 def guidedfilter(I, p, r, eps):
     '''''引导滤波，直接参考网上的matlab代码'''
@@ -73,19 +69,41 @@ def tonemapping(image,value):
     img_out = img_out * (1-mask_2) + mask_2
     return (img_out*255).astype(np.uint8)
 
-def color_matching(img):
+def color_matching(img,dark):
+    dark = dark / 255
     img = img.copy()
     img = saturation(img,.5)
-    img = tonemapping(img,.5)
+    img = contrast(img,.5) * dark.reshape((*dark.shape,1)) + (1 - dark.reshape((*dark.shape,1))) * img
+    ligten = img * dark.reshape((*dark.shape,1))
+    cv2.imwrite('lighten_area.png',ligten)
+    img = tonemapping(img,.5) * (1 - dark.reshape((*dark.shape,1))) + dark.reshape((*dark.shape,1)) * img
     return img
-    
+
+def clean_noise(img,threshold=32):
+    contours,_ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    n = len(contours)  # 轮廓的个数
+    cv_contours = []
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area >= threshold:
+            cv_contours.append(contour)
+    cv2.fillPoly(img, cv_contours, (255, 255, 255))
+    return img
 
 def animation(image):
     dark_channel = zmMinFilterGray(np.min(image,2),7)
     cv2.imwrite('dark_channel.png', dark_channel)
+    dark_blur = cv2.blur(dark_channel,(15,15))
+    dark_blur = cv2.bilateralFilter(dark_blur,0,100,15)
+    cv2.imwrite('dark_blur.png', dark_blur)
+    # _,dark_mask = cv2.threshold(dark_channel,64,255,cv2.THRESH_BINARY)
+    # dark_mask = cv2.GaussianBlur(dark_mask,(15,15),10)
+    # dark_mask = clean_noise(dark_mask,128)
+    # dark_mask = cv2.GaussianBlur(dark_mask,(15,15),10)
+    # cv2.imwrite('dark_mask.png', dark_mask)
     color = image.copy()
     image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    tone = color_matching(color)
+    tone = color_matching(color,dark_blur)
     kernel = np.array([[1,0],
                         [0,-1]])
     threshold = 230
@@ -96,7 +114,7 @@ def animation(image):
     # res[np.where(res<=threshold)] = 0
     res[np.where(res>threshold)] = 255
     ret, binary = cv2.threshold(res,240,255,cv2.THRESH_BINARY)
-    _, contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     n = len(contours)  # 轮廓的个数
     cv_contours = []
     for contour in contours:
