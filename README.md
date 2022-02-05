@@ -1,6 +1,6 @@
 # ImageProcessing
  
-This is a digital image processing works set, including papers, codes and new algrothm.
+This is a digital image processing works set, including papers, codes and new algorithms.
 
 This repository will not include Machine Learning and Deep Learning!
 
