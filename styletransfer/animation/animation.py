@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 import math
 
+def luminance(image,value):
+    image = image + value * 100
+    image = np.clip(image,0,255)
+    return image.astype(np.uint8)
+
 def saturation(image, value):
     image = image.copy() / 255
     rgb_max = np.max(image,axis=2)
@@ -73,10 +78,11 @@ def color_matching(img,dark):
     dark = dark / 255
     img = img.copy()
     img = saturation(img,.5)
-    img = contrast(img,.5) * dark.reshape((*dark.shape,1)) + (1 - dark.reshape((*dark.shape,1))) * img
+    img = contrast(img,-.9) * dark.reshape((*dark.shape,1)) + (1 - dark.reshape((*dark.shape,1))) * img
     ligten = img * dark.reshape((*dark.shape,1))
     cv2.imwrite('lighten_area.png',ligten)
-    img = tonemapping(img,.5) * (1 - dark.reshape((*dark.shape,1))) + dark.reshape((*dark.shape,1)) * img
+    img = tonemapping(img,-.2) * (1 - dark.reshape((*dark.shape,1))) + dark.reshape((*dark.shape,1)) * img
+    img = luminance(img,.5)
     return img
 
 def clean_noise(img,threshold=32):
@@ -103,6 +109,8 @@ def animation(image):
     # cv2.imwrite('dark_mask.png', dark_mask)
     color = image.copy()
     image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    for _ in range(3):
+        color = cv2.bilateralFilter(color,9,17,17)
     tone = color_matching(color,dark_blur)
     kernel = np.array([[1,0],
                         [0,-1]])
@@ -114,7 +122,7 @@ def animation(image):
     # res[np.where(res<=threshold)] = 0
     res[np.where(res>threshold)] = 255
     ret, binary = cv2.threshold(res,240,255,cv2.THRESH_BINARY)
-    contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _,contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     n = len(contours)  # 轮廓的个数
     cv_contours = []
     for contour in contours:
@@ -127,9 +135,10 @@ def animation(image):
     cv2.imwrite('tone.png', tone)
     res = res / 255
     res = res.reshape((*res.shape,1)) * tone
+    res = np.clip(res,0,255)
     cv2.imwrite('res.png', res.astype(np.uint8))
 
 
 if __name__ == '__main__':
-    image = cv2.imread('90.jpg')
+    image = cv2.imread('26.jpg')
     animation(image)
