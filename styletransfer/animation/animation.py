@@ -97,6 +97,7 @@ def clean_noise(img,threshold=32):
     return img
 
 def animation(image):
+    cv2.imwrite('dark.png',np.min(image,2))
     dark_channel = zmMinFilterGray(np.min(image,2),7)
     cv2.imwrite('dark_channel.png', dark_channel)
     dark_blur = cv2.blur(dark_channel,(15,15))
@@ -113,7 +114,7 @@ def animation(image):
         color = cv2.bilateralFilter(color,9,17,17)
     tone = color_matching(color,dark_blur)
     kernel = np.array([[1,0],
-                        [0,-1]])
+                       [0,-1]])
     threshold = 230
     image = cv2.GaussianBlur(image,(1,1),3)
     res1 = cv2.filter2D(image,-1,kernel)
@@ -122,14 +123,13 @@ def animation(image):
     # res[np.where(res<=threshold)] = 0
     res[np.where(res>threshold)] = 255
     ret, binary = cv2.threshold(res,240,255,cv2.THRESH_BINARY)
-    _,contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     n = len(contours)  # 轮廓的个数
     cv_contours = []
     for contour in contours:
         area = cv2.contourArea(contour)
         if area >= 32:
             cv_contours.append(contour)
-    print(n)
     cv2.fillPoly(res, cv_contours, (255, 255, 255))
     cv2.imwrite('edge.png', res)
     cv2.imwrite('tone.png', tone)
@@ -140,5 +140,5 @@ def animation(image):
 
 
 if __name__ == '__main__':
-    image = cv2.imread('26.jpg')
+    image = cv2.imread('90.jpg')
     animation(image)

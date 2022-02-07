@@ -60,6 +60,6 @@ def filter(image):
     return rgb1
 
 if __name__ == '__main__':
-    image = cv2.imread('26.jpg')
+    image = cv2.imread('90.jpg')
     # filter(image)
     cv2.imwrite('RTVA.png',filter(image))
