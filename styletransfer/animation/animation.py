@@ -78,11 +78,11 @@ def color_matching(img,dark):
     dark = dark / 255
     img = img.copy()
     img = saturation(img,.5)
-    img = contrast(img,-.9) * dark.reshape((*dark.shape,1)) + (1 - dark.reshape((*dark.shape,1))) * img
+    img = contrast(img,-.3) * dark.reshape((*dark.shape,1)) + (1 - dark.reshape((*dark.shape,1))) * img
     ligten = img * dark.reshape((*dark.shape,1))
     cv2.imwrite('lighten_area.png',ligten)
     img = tonemapping(img,-.2) * (1 - dark.reshape((*dark.shape,1))) + dark.reshape((*dark.shape,1)) * img
-    img = luminance(img,.5)
+    img = luminance(img,.2)
     return img
 
 def clean_noise(img,threshold=32):
@@ -110,8 +110,9 @@ def animation(image):
     # cv2.imwrite('dark_mask.png', dark_mask)
     color = image.copy()
     image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    for _ in range(3):
-        color = cv2.bilateralFilter(color,9,17,17)
+    # for _ in range(3):
+    #     color = cv2.bilateralFilter(color,9,17,17)
+    color = cv2.pyrMeanShiftFiltering(color,30,30)
     tone = color_matching(color,dark_blur)
     kernel = np.array([[1,0],
                        [0,-1]])
