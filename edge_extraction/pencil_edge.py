@@ -93,7 +93,7 @@ def pencil_stroke(img):
     return S
 
 if __name__ == '__main__':
-    img_path = 'sample.jpg'
+    img_path = 'sample.png'
     img = cv2.imread(img_path)
     res = pencil_stroke(img)
     cv2.imwrite('stroke.jpg', res)

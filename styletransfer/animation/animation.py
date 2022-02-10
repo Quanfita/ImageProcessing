@@ -2,43 +2,6 @@ import cv2
 import numpy as np
 import math
 
-def luminance(image,value):
-    image = image + value * 100
-    image = np.clip(image,0,255)
-    return image.astype(np.uint8)
-
-def saturation(image, value):
-    image = image.copy() / 255
-    rgb_max = np.max(image,axis=2)
-    rgb_min = np.min(image,axis=2)
-    delta = rgb_max - rgb_min
-    v = rgb_max + rgb_min
-    L = v / 2
-    t = np.zeros_like(v,dtype=int)
-    t[np.where(L < .5)] = 1
-    S = t * delta / (v) + (1 - t) * delta / (2 - v)
-    if value > 0:
-        t[:,:] = 0
-        t[S + value >= 1] = 1
-        L = L.reshape((*image.shape[:-1],1))
-        S = S.reshape((*image.shape[:-1],1))
-        t = t.reshape((*image.shape[:-1],1))
-        alpha = (t * S + (1 - t) * (1 - value))
-        image = image + (image - L)*alpha
-    else:
-        alpha = (1 / value -1).reshape((*image.shape[:-1],1))
-        L = L.reshape((*image.shape[:-1],1))
-        image = L + (image - L) * (1 + alpha)
-    return image*255
-
-def contrast(image,value):
-    image = image / 255
-    mean = np.mean(image)
-    # mean = np.mean(image,axis=2).reshape([*image.shape[:-1],1])
-    image = ((image - mean) * (1 + value) + mean)*255
-    image = np.clip(image,0,255)
-    return image.astype(np.uint8)
-
 def zmMinFilterGray(src, r=7):
     '''''最小值滤波，r是滤波器半径'''
     return cv2.erode(src,np.ones((2*r-1,2*r-1)))
@@ -61,28 +24,27 @@ def guidedfilter(I, p, r, eps):
     m_b = cv2.boxFilter(b, -1, (r,r))
     return m_a*I+m_b
 
+def get_mean_and_std(img):
+	x_mean, x_std = cv2.meanStdDev(img)
+	x_mean = np.hstack(np.around(x_mean, 2))
+	x_std = np.hstack(np.around(x_std, 2))
+	return x_mean, x_std
 
-def tonemapping(image,value):
-    image = image.copy() * 1.0
-    image_blur = cv2.GaussianBlur(image,(5,5),10)
-    bias = image - image_blur
-    image = image_blur*(1 + value) + bias
-    image = image / 255 
-    mask_1 = image  < 0 
-    mask_2 = image  > 1
-    img_out = image * (1-mask_1)
-    img_out = img_out * (1-mask_2) + mask_2
-    return (img_out*255).astype(np.uint8)
+def color_transfer(sc):
+	sc = cv2.cvtColor(sc, cv2.COLOR_BGR2LAB)
+	s_mean, s_std = get_mean_and_std(sc)
+	t_mean, t_std = np.array([175.15,132.56,114.29]),np.array([45.69,11.05,17.46])
+	st = (s_mean / t_mean) ** 1.5
+	img_n = ((sc-s_mean)*(t_std/s_std))+t_mean
+	np.putmask(img_n, img_n > 255, 255)
+	np.putmask(img_n, img_n < 0, 0)
+	dst = cv2.cvtColor(cv2.convertScaleAbs(img_n), cv2.COLOR_LAB2BGR)
+	return dst
 
 def color_matching(img,dark):
     dark = dark / 255
     img = img.copy()
-    img = saturation(img,.5)
-    img = contrast(img,-.3) * dark.reshape((*dark.shape,1)) + (1 - dark.reshape((*dark.shape,1))) * img
-    ligten = img * dark.reshape((*dark.shape,1))
-    cv2.imwrite('lighten_area.png',ligten)
-    img = tonemapping(img,-.2) * (1 - dark.reshape((*dark.shape,1))) + dark.reshape((*dark.shape,1)) * img
-    img = luminance(img,.2)
+    img = color_transfer(img)
     return img
 
 def clean_noise(img,threshold=32):
@@ -124,7 +86,7 @@ def animation(image):
     # res[np.where(res<=threshold)] = 0
     res[np.where(res>threshold)] = 255
     ret, binary = cv2.threshold(res,240,255,cv2.THRESH_BINARY)
-    contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _,contours,_ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     n = len(contours)  # 轮廓的个数
     cv_contours = []
     for contour in contours:

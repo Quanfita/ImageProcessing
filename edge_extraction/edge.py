@@ -150,8 +150,8 @@ def edge(image):
     cv2.imwrite('DoG.png',H)
 
 if __name__ == '__main__':
-    img = cv2.imread('sample.jpg',0)
-    image = cv2.imread('sample.jpg')
+    img = cv2.imread('sample.png',0)
+    image = cv2.imread('sample.png')
     edge(img)
     edge_filter(img)
     # edge_demo(image)
